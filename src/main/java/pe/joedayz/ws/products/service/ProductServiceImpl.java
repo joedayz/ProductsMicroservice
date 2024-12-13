@@ -1,6 +1,7 @@
 package pe.joedayz.ws.products.service;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -29,15 +30,30 @@ public class ProductServiceImpl implements ProductService {
         createProductRestModel.getTitle(), createProductRestModel.getPrice(),
         createProductRestModel.getQuantity());
 
-    LOGGER.info("Antes de enviar el evento ProductCreatedEvent");
-    SendResult<String, ProductCreatedEvent> result = kafkaTemplate.send(
-        "product-created-events-topic", productId, productCreatedEvent).get();
+//    LOGGER.info("Antes de enviar el evento ProductCreatedEvent");
+//    SendResult<String, ProductCreatedEvent> result = kafkaTemplate.send(
+//        "product-created-events-topic", productId, productCreatedEvent).get();
+//
+//    LOGGER.info("Partition: " + result.getRecordMetadata().partition());
+//    LOGGER.info("Topic: " + result.getRecordMetadata().topic());
+//    LOGGER.info("Offset: " + result.getRecordMetadata().offset());
+//
+//    LOGGER.info("Returnando product Id");
 
-    LOGGER.info("Partition: " + result.getRecordMetadata().partition());
-    LOGGER.info("Topic: " + result.getRecordMetadata().topic());
-    LOGGER.info("Offset: " + result.getRecordMetadata().offset());
+    CompletableFuture<SendResult<String, ProductCreatedEvent>> future =
+        kafkaTemplate.send("product-created-events-topic", productId, productCreatedEvent);
 
-    LOGGER.info("Returnando product Id");
+    future.whenComplete((result, exception) -> {
+      if(exception != null) {
+        LOGGER.error("******* Failed to send message: " + exception.getMessage());
+      }else{
+        LOGGER.info("******* Sent message successfully: " + result.getRecordMetadata());
+      }
+    });
+
+    future.join();
+
+    LOGGER.info("******* Returning product id");
 
     return productId;
   }
