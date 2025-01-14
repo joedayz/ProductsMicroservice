@@ -2,6 +2,7 @@ package pe.joedayz.ws.products.service;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -32,31 +33,38 @@ public class ProductServiceImpl implements ProductService {
         createProductRestModel.getQuantity());
 
     // SINCRONO
-//    LOGGER.info("Antes de enviar el evento ProductCreatedEvent");
-//    SendResult<String, ProductCreatedEvent> result = kafkaTemplate.send(
-//        "product-created-events-topic", productId, productCreatedEvent).get();
-//
-//    LOGGER.info("Partition: " + result.getRecordMetadata().partition());
-//    LOGGER.info("Topic: " + result.getRecordMetadata().topic());
-//    LOGGER.info("Offset: " + result.getRecordMetadata().offset());
-//
-//    LOGGER.info("Returnando product Id");
+    LOGGER.info("Antes de enviar el evento ProductCreatedEvent");
+
+    ProducerRecord<String, ProductCreatedEvent> record = new ProducerRecord<>(
+        "product-created-events-topic",
+        productId,
+        productCreatedEvent
+    );
+    record.headers().add("messageId", UUID.randomUUID().toString().getBytes());
+
+    SendResult<String, ProductCreatedEvent> result = kafkaTemplate.send(record).get();
+
+    LOGGER.info("Partition: " + result.getRecordMetadata().partition());
+    LOGGER.info("Topic: " + result.getRecordMetadata().topic());
+    LOGGER.info("Offset: " + result.getRecordMetadata().offset());
+
+    LOGGER.info("Returnando product Id");
 
     //ASINCRONO
-    CompletableFuture<SendResult<String, ProductCreatedEvent>> future =
-        kafkaTemplate.send("product-created-events-topic", productId, productCreatedEvent);
-
-    future.whenComplete((result, exception) -> {
-      if(exception != null) {
-        LOGGER.error("******* Failed to send message: " + exception.getMessage());
-      }else{
-        LOGGER.info("Partition: " + result.getRecordMetadata().partition());
-        LOGGER.info("Topic: " + result.getRecordMetadata().topic());
-        LOGGER.info("Offset: " + result.getRecordMetadata().offset());
-      }
-    });
-
-    future.join();
+//    CompletableFuture<SendResult<String, ProductCreatedEvent>> future =
+//        kafkaTemplate.send("product-created-events-topic", productId, productCreatedEvent);
+//
+//    future.whenComplete((result, exception) -> {
+//      if(exception != null) {
+//        LOGGER.error("******* Failed to send message: " + exception.getMessage());
+//      }else{
+//        LOGGER.info("Partition: " + result.getRecordMetadata().partition());
+//        LOGGER.info("Topic: " + result.getRecordMetadata().topic());
+//        LOGGER.info("Offset: " + result.getRecordMetadata().offset());
+//      }
+//    });
+//
+//    future.join();
 
     LOGGER.info("******* Returning product id");
 
