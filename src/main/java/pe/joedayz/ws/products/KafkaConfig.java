@@ -11,7 +11,7 @@ import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
-import pe.joedayz.ws.core.ProductCreatedEvent;
+import pe.joedayz.ws.core.events.ProductCreatedEvent;
 
 /**
  * @author josediaz
